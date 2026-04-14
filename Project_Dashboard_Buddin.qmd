@@ -1,0 +1,16 @@
+---
+title: "White Faced Ibis in the Bear River Migratory Bird Refuge, UT"
+format: dashboard
+editor: visual
+author: "Alastair Buddin"
+---
+
+```{r}
+#| message: false
+library("tidyverse")
+library("janitor")
+nest_data_rough <- read.csv("C:/Users/apbb0/OneDrive - Montana State University/STAT408/Project/wfib.ns.data_data_release.csv")
+nest_data = clean_names(nest_data_rough)  
+```
+
+## 
