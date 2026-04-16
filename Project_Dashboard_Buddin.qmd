@@ -7,10 +7,51 @@ author: "Alastair Buddin"
 
 ```{r}
 #| message: false
-library("tidyverse")
-library("janitor")
-nest_data_rough <- read.csv("C:/Users/apbb0/OneDrive - Montana State University/STAT408/Project/wfib.ns.data_data_release.csv")
+library(tidyverse)
+library(janitor)
+library(leaflet)
+library(leafem)
+library(rnaturalearth)
+library(sf)
+library(terra)
+#load and clean data
+nest_data_rough <- read.csv("C:/Users/apbb0/OneDrive - Montana State University/STAT408/Project/STAT408_Project_Buddin/wfib.ns.data_data_release.csv")
 nest_data = clean_names(nest_data_rough)  
+#load raster
+  veg_raster = rast("C:/Users/apbb0/OneDrive - Montana State University/STAT408/Project/STAT408_Project_Buddin/LPC_h008v007_HC_2012_V01.tif")
+  veg_raster = veg_raster|>
+    project("EPSG:4326")
+  raster_bounds = ext(-1365585, -1365000, 2114805, 2114900)
+  veg_raster_clip = crop(veg_raster, raster_bounds)
+
+
+#clipping raster to extent of study area
+
 ```
 
-## 
+## Row {height="60%"}
+
+```{r}
+# map wiht dummy data
+map <- leaflet() %>% 
+  addTiles()%>%
+  addProviderTiles("Esri.WorldImagery")%>%
+  leafem::addGeotiff(veg_raster_clip, layerId = )%>%
+    setView( lat = 41.474344, lng = -112.296844, zoom = 12)
+#add spectral data, and load into map
+map
+```
+
+## Row {height="30%"}
+
+```{r}
+ggplot(data = nest_data, aes(x = veg_percent_vegetation, y = avg_veg_height)) +
+  geom_point()+
+  labs( 
+    x = "Vegetation Cover %",
+    y = "Average Vegetation Height",
+    title = " Vegetation Structure"
+  )
+
+
+```
