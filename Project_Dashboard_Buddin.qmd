@@ -7,7 +7,7 @@ author: "Alastair Buddin"
 
 ```{r}
 #| message: false
-library(tidyverse)
+library(tidyverse) 
 library(janitor)
 library(leaflet)
 library(leafem)
@@ -17,41 +17,114 @@ library(terra)
 #load and clean data
 nest_data_rough <- read.csv("C:/Users/apbb0/OneDrive - Montana State University/STAT408/Project/STAT408_Project_Buddin/wfib.ns.data_data_release.csv")
 nest_data = clean_names(nest_data_rough)  
-#load raster
-  veg_raster = rast("C:/Users/apbb0/OneDrive - Montana State University/STAT408/Project/STAT408_Project_Buddin/LPC_h008v007_HC_2012_V01.tif")
-  veg_raster = veg_raster|>
-    project("EPSG:4326")
-  raster_bounds = ext(-1365585, -1365000, 2114805, 2114900)
-  veg_raster_clip = crop(veg_raster, raster_bounds)
 
-
-#clipping raster to extent of study area
 
 ```
 
-## Row {height="60%"}
+```{r}
+#| output: false
+
+# #load raster
+ #veg_raster = rast("C:/Users/apbb0/OneDrive - Montana State University/STAT408/Project/STAT408_Project_Buddin/LPC_h008v007_HC_2012_V01.tif")
+# #reproject raster  
+# veg_raster = project(veg_raster, "EPSG:4326")
+# #set bounds based on shp
+# raster_bounds = vect("C:/Users/apbb0/OneDrive - Montana State University/STAT408/Project/STAT408_Project_Buddin/BRVMBR_bounds.shp")
+# raster_bounds = project(raster_bounds, "EPSG:4326")
+# #clip raster to shp extent
+# veg_raster_clip = crop(veg_raster, raster_bounds, snap="in")
+# writeRaster(
+#   veg_raster_clip,
+#   filename = "veg_raster_clip.tif",
+#   overwrite = TRUE,
+#   gdal = c("COMPRESS=LZW")
+# )
+
+
+# I had to comment out the above code because the file size was too large
+
+veg_raster_clip <- rast("C:/Users/apbb0/OneDrive - Montana State University/STAT408/Project/STAT408_Project_Buddin/veg_raster_clip.tif")
+veg_raster_clip = project(veg_raster_clip, "EPSG:4326" )
+# assigns red and nir bands
+red_band <- veg_raster_clip[["LPC_h008v007_HC_2012_V01_3"]]
+nir_band <- veg_raster_clip[["LPC_h008v007_HC_2012_V01_4"]]
+#function to create ndvi raster
+calc_ndvi <- function(nir, red){
+  ndvi <- (nir-red)/(nir+red)
+  return(ndvi)
+}
+#creating ndvi from clipped raster
+ndvi_raster = calc_ndvi(nir_band, red_band)
+
+#making missing values NA
+values(ndvi_raster)[is.nan(values(ndvi_raster))] <- NA
+
+ndvi_pal <- colorRampPalette(c(
+  "#8c510a",  # brown (bare ground)
+  "#d8b365",
+  "#f6e8c3",
+  "#c7eae5",
+  "#5ab4ac",
+  "#01665e"   # dark green (dense vegetation)
+))
+
+#plot(ndvi_raster, col = ndvi_pal(200))
+
+
+
+#saving ndvi to its own .tif
+tmpfile <- tempfile(fileext = ".tif")
+writeRaster(ndvi_raster, tmpfile, overwrite = TRUE)
+#plotting the NDVI  
+#plot(ndvi_raster)
+
+
+#plot(veg_raster_clip)
+
+```
+
+# Overview
+
+Vegetation analysis of nesting habitat for birds can be used to create distribution models and predictiong nesting locations. Comparing an normalized difference vegetation index (NDVI) to vegetation data The nesting data was collected by Ackerman and Herzog in 2020 through the Western Ecological Research Center and USGS, and their analysis was published in the *The Wilson Journal of Ornithology*
+
+## Column {height="80%"}
 
 ```{r}
-# map wiht dummy data
+# map wiht ndvi raster
+#| fig-width: 14
+#| fig-height: 18
 map <- leaflet() %>% 
   addTiles()%>%
   addProviderTiles("Esri.WorldImagery")%>%
-  leafem::addGeotiff(veg_raster_clip, layerId = )%>%
-    setView( lat = 41.474344, lng = -112.296844, zoom = 12)
-#add spectral data, and load into map
+  addRasterImage(ndvi_raster, colors = ndvi_pal(200))%>%
+    setView( lat = 41.474344, lng = -112.296844, zoom = 11)
 map
 ```
 
-## Row {height="30%"}
+# Graphs and Nest Analysis
+
+## Column
 
 ```{r}
-ggplot(data = nest_data, aes(x = veg_percent_vegetation, y = avg_veg_height)) +
-  geom_point()+
-  labs( 
-    x = "Vegetation Cover %",
-    y = "Average Vegetation Height",
-    title = " Vegetation Structure"
+#basic graph showing Relationship between vegetation height and cover
+
+
+nest_data_by_veg = nest_data|>
+  group_by(veg_percent_vegetation)|>
+  mutate(
+    survive_count = sum(survive_full)
   )
+scale_factor = mean(nest_data$avg_veg_height)/mean(nest_data$survive_count)
+
+ggplot(data= nest_data_by_veg, aes(x = veg_percent_vegetation)) +
+geom_point(aes(y = avg_veg_height))+
+geom_line(aes(y = survive_count*scale_factor))+
+scale_y_continuous(
+  name = "Average Vegetation Height (cm)",
+  sec.axis = sec_axis(~./scale_factor, name = "Number of Nest Successes")
+)
+
+
 
 
 ```
