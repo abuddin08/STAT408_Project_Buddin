@@ -43,11 +43,11 @@ nest_by_site = nest_data|>
 
 
 # #load band 4 raster
-# veg_B04 = rast("C:/Users/apbb0/OneDrive - Montana State University/STAT408/Project/STAT408_Project_Buddin/HLS.L30.T12TUL.2023140T180705.v2.0.B04.tif")
+# veg_B04 = rast("HLS.L30.T12TUL.2023140T180705.v2.0.B04.tif")
 # #reproject raster
 # #veg_B04 = project(veg_B04, "EPSG:4326")
 # #set bounds based on shp
-# raster_bounds = vect("C:/Users/apbb0/OneDrive - Montana State University/STAT408/Project/STAT408_Project_Buddin/BRVMBR_bounds.shp")
+# raster_bounds = vect("BRVMBR_bounds.shp")
 # raster_bounds = project(raster_bounds, crs(veg_B04))
 # #clip raster to shp extent
 # veg_B04_clip = mask(crop(veg_B04, raster_bounds), raster_bounds)
@@ -59,7 +59,7 @@ nest_by_site = nest_data|>
 # )
 # 
 # #load band 5 raster
-# veg_B05 = rast("C:/Users/apbb0/OneDrive - Montana State University/STAT408/Project/STAT408_Project_Buddin/HLS.L30.T12TUL.2023140T180705.v2.0.B05.tif")
+# veg_B05 = rast("HLS.L30.T12TUL.2023140T180705.v2.0.B05.tif")
 # #reproject raster
 # #veg_B05 = project(veg_B05, "EPSG:4326")
 # #clip raster to shp extent
@@ -174,7 +174,7 @@ ggplot(data = nest_by_site, aes(x = nest_site, y = mean_height, fill = nest_site
   ))+
   labs(
     x = "Nesting Site",
-    y = "Mean Vegetation Height",
+    y = "Mean Vegetation Height (cm)",
     title = "Average Vegetation Height Across 3 Sampling Sites"
     
   )+
@@ -237,7 +237,7 @@ ggplot(
     ))+ 
   labs(
     x = "Nesting Site",
-    y = "Mean Water Depth",
+    y = "Mean Water Depth (cm)",
     title = "Average Water Depth Across the 3 Sites"
   )+
     
